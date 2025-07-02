@@ -19,6 +19,8 @@ function App() {
     const chatAreaRef = useRef<HTMLDivElement>(null);
     const ws = useRef<WebSocket | null>(null);
 
+    const sessionId = useRef<string>(crypto.randomUUID());
+
     // Auto-scroll to the bottom of the chat
     useEffect(() => {
         if (chatAreaRef.current) {
@@ -48,7 +50,7 @@ function App() {
         setMessages(prev => [...prev, newUserMessage, aiPlaceholder]);
 
         // --- Start of WebSocket Integration ---
-        ws.current = new WebSocket('ws://localhost:5000');
+        ws.current = new WebSocket(`ws://localhost:5000?sessionId=${sessionId.current}`);
 
         ws.current.onopen = () => {
             console.log('Connected to WebSocket server');
@@ -66,7 +68,7 @@ function App() {
                         const newMessages = [...prev];
                         // Append the new chunk to the last AI message
                         console.log("model reply",data);
-                        newMessages[newMessages.length - 1].text = data.reply;
+                        newMessages[newMessages.length - 1].text += data.reply;
                         return newMessages;
                     });
                 });
