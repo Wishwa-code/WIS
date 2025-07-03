@@ -4,6 +4,8 @@ import { flushSync } from 'react-dom';
 import reactLogo from '/react.svg'
 import viteLogo from '/vite.svg'
 import './App.css'
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 type Message = {
     text: string;
@@ -160,14 +162,22 @@ function App() {
         }
     };
 
-    // ✨ --- THIS IS THE CORRECTED FUNCTION --- ✨
     const handleSendMessage = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         const userMessage = inputValue.trim();
-        if (!userMessage) return;
 
-        setInputValue("");
+        // Don't send if there's no message or if we're already waiting for a response.
+        if (!userMessage && !imageFile) return;
+        
+        // Check if the WebSocket is ready.
+        if (!isWsConnected || !ws.current || ws.current.readyState !== WebSocket.OPEN) {
+            // Show an error message to the user.
+            setMessages(prev => [...prev, { text: "I'm not connected right now. Please wait while I try to reconnect...", sender: 'ai' }]);
+            return;
+        }
+
         setIsLoading(true);
+        setInputValue("");
 
         let imagePath = null;
         if (imageFile) {
@@ -182,85 +192,128 @@ function App() {
                 imagePath = data.filePath;
             } catch (error) {
                 console.error('Error uploading image:', error);
+                setMessages(prev => [...prev, { text: "Sorry, I couldn't upload your image. Please try again.", sender: 'ai' }]);
                 setIsLoading(false);
-                // Optionally, show an error message to the user
                 return;
             }
         }
-
-        // ✅ FIX: Add user message and AI placeholder in ONE atomic state update.
-        const newUserMessage: Message = { text: userMessage, sender: "user" };
+        // Add user message and AI placeholder to the chat.
+        const newUserMessage: Message = { text: userMessage, sender: "user", image: imagePreview ?? undefined };
         const aiPlaceholder: Message = { text: "", sender: "ai" };
         setMessages(prev => [...prev, newUserMessage, aiPlaceholder]);
 
+        // Reset image states
         setImageFile(null);
         setImagePreview(null);
         if (fileInputRef.current) {
             fileInputRef.current.value = "";
         }
 
-        // --- Start of WebSocket Integration ---
-        ws.current = new WebSocket(`ws://localhost:5000?sessionId=${sessionId.current}`);
-
-        ws.current.onopen = () => {
-            console.log('Connected to WebSocket server');
-            // We no longer set state here. Just send the message.
-            ws.current?.send(JSON.stringify({ message: userMessage , imagePath}));
-        };
-
-        ws.current.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-
-            if (data.reply) {
-                // Use flushSync to force immediate re-renders for each token.
-                flushSync(() => {
-                    setMessages(prev => {
-                        const newMessages = [...prev];
-                        // Append the new chunk to the last AI message
-                        console.log("model reply",data);
-                        newMessages[newMessages.length - 1].text += data.reply;
-                        return newMessages;
-                    });
-                });
-            }
-
-            if (data.endOfStream) {
-                console.log('Stream ended.');
-                setIsLoading(false);
-                ws.current?.close();
-            }
-
-            if (data.error) {
-                console.error('Server error:', data.error);
-                // Update the placeholder with an error message for a better UX
-                 setMessages(prev => {
-                    const newMessages = [...prev];
-                    newMessages[newMessages.length - 1].text = `Sorry, an error occurred: ${data.error}`;
-                    return newMessages;
-                });
-                setIsLoading(false);
-            }
-        };
-
-        ws.current.onclose = () => {
-            console.log('Disconnected from WebSocket server');
-            setIsLoading(false);
-        };
-
-        ws.current.onerror = (error) => {
-            console.error('WebSocket error:', error);
-             // Update the placeholder with an error message
-            setMessages(prev => {
-                const newMessages = [...prev];
-                const lastMessage = newMessages[newMessages.length - 1];
-                if (lastMessage && lastMessage.sender === 'ai') {
-                    lastMessage.text = "Sorry, I'm having trouble connecting. Please try again.";
-                }
-                return newMessages;
-            });
-            setIsLoading(false);
-        };
+        // Send the message over the persistent WebSocket connection.
+        ws.current.send(JSON.stringify({ message: userMessage, imagePath }));
     };
+
+    // ✨ --- THIS IS THE CORRECTED FUNCTION --- ✨
+    // const handleSendMessage = async (e: React.FormEvent<HTMLFormElement>) => {
+    //     e.preventDefault();
+    //     const userMessage = inputValue.trim();
+    //     if (!userMessage) return;
+
+    //     setInputValue("");
+    //     setIsLoading(true);
+
+    //     let imagePath = null;
+    //     if (imageFile) {
+    //         const formData = new FormData();
+    //         formData.append('image', imageFile);
+    //         try {
+    //             const response = await fetch('http://localhost:5000/upload', {
+    //                 method: 'POST',
+    //                 body: formData,
+    //             });
+    //             const data = await response.json();
+    //             imagePath = data.filePath;
+    //         } catch (error) {
+    //             console.error('Error uploading image:', error);
+    //             setIsLoading(false);
+    //             // Optionally, show an error message to the user
+    //             return;
+    //         }
+    //     }
+
+    //     // ✅ FIX: Add user message and AI placeholder in ONE atomic state update.
+    //     const newUserMessage: Message = { text: userMessage, sender: "user" };
+    //     const aiPlaceholder: Message = { text: "", sender: "ai" };
+    //     setMessages(prev => [...prev, newUserMessage, aiPlaceholder]);
+
+    //     setImageFile(null);
+    //     setImagePreview(null);
+    //     if (fileInputRef.current) {
+    //         fileInputRef.current.value = "";
+    //     }
+
+    //     // --- Start of WebSocket Integration ---
+    //     ws.current = new WebSocket(`ws://localhost:5000?sessionId=${sessionId.current}`);
+
+    //     ws.current.onopen = () => {
+    //         console.log('Connected to WebSocket server');
+    //         // We no longer set state here. Just send the message.
+    //         ws.current?.send(JSON.stringify({ message: userMessage , imagePath}));
+    //     };
+
+    //     ws.current.onmessage = (event) => {
+    //         const data = JSON.parse(event.data);
+
+    //         if (data.reply) {
+    //             // Use flushSync to force immediate re-renders for each token.
+    //             flushSync(() => {
+    //                 setMessages(prev => {
+    //                     const newMessages = [...prev];
+    //                     // Append the new chunk to the last AI message
+    //                     console.log("model reply",data);
+    //                     newMessages[newMessages.length - 1].text += data.reply;
+    //                     return newMessages;
+    //                 });
+    //             });
+    //         }
+
+    //         if (data.endOfStream) {
+    //             console.log('Stream ended.');
+    //             setIsLoading(false);
+    //             ws.current?.close();
+    //         }
+
+    //         if (data.error) {
+    //             console.error('Server error:', data.error);
+    //             // Update the placeholder with an error message for a better UX
+    //              setMessages(prev => {
+    //                 const newMessages = [...prev];
+    //                 newMessages[newMessages.length - 1].text = `Sorry, an error occurred: ${data.error}`;
+    //                 return newMessages;
+    //             });
+    //             setIsLoading(false);
+    //         }
+    //     };
+
+    //     ws.current.onclose = () => {
+    //         console.log('Disconnected from WebSocket server');
+    //         setIsLoading(false);
+    //     };
+
+    //     ws.current.onerror = (error) => {
+    //         console.error('WebSocket error:', error);
+    //          // Update the placeholder with an error message
+    //         setMessages(prev => {
+    //             const newMessages = [...prev];
+    //             const lastMessage = newMessages[newMessages.length - 1];
+    //             if (lastMessage && lastMessage.sender === 'ai') {
+    //                 lastMessage.text = "Sorry, I'm having trouble connecting. Please try again.";
+    //             }
+    //             return newMessages;
+    //         });
+    //         setIsLoading(false);
+    //     };
+    // };
 
     // ✨ --- Function to toggle theme --- ✨
     const toggleTheme = () => {
@@ -280,7 +333,13 @@ function App() {
                         // The loading indicator will show alongside it.
                         <div key={index} className={`message ${msg.sender}`}>
                             {msg.image && <img src={msg.image} alt="User upload" className="message-image" />}
-                            {msg.text}
+                            {msg.sender === 'ai' ? (
+                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                    {msg.text}
+                                </ReactMarkdown>
+                            ) : (
+                                msg.text
+                            )}
                         </div>
                     ))}
                     {/* The loading indicator is now simpler and more reliable */}

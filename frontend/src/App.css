@@ -7,7 +7,6 @@
 /* ☀️ Light Mode (Default) */
 :root {
   --body-bg-color: #f4f7f6;
-  --chat-container-bg: #f4f7f6;
   --chat-container-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   --header-bg: #4a90e2;
   --header-text: #ffffff;
@@ -22,12 +21,12 @@
   --send-button-bg: #4a90e2;
   --send-button-bg-hover: #357abd;
   --send-button-text: #ffffff;
+  --link-color: #0066cc;
 }
 
 /* 🌒 Dark Mode */
 [data-theme='dark'] {
   --body-bg-color: #121212;
-  --chat-container-bg: #121212;
   --chat-container-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
   --header-bg: #1a1a1a;
   --header-text: #ffffff;
@@ -42,6 +41,7 @@
   --send-button-bg: #3a7ac2;
   --send-button-bg-hover: #2a69b0;
   --send-button-text: #ffffff;
+  --link-color: #90caf9;
 }
 
 /*
@@ -128,6 +128,9 @@ body {
   color: var(--user-message-text);
   align-self: flex-end;
   border-bottom-right-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .ai {
@@ -135,6 +138,7 @@ body {
   color: var(--ai-message-text);
   align-self: flex-start;
   border-bottom-left-radius: 4px;
+  text-align: left;
 }
 
 .loading {
@@ -142,6 +146,85 @@ body {
   color: var(--loading-text);
   font-style: italic;
 }
+
+/*
+ * =========================================
+ * ✨ MARKDOWN STYLES
+ * =========================================
+ */
+
+.message.ai p {
+  margin: 0 0 0.5em 0;
+}
+.message.ai p:last-child {
+  margin-bottom: 0;
+}
+.message.ai h1, .message.ai h2, .message.ai h3 {
+  margin-top: 0.8em;
+  margin-bottom: 0.5em;
+  line-height: 1.2;
+}
+.message.ai ul, .message.ai ol {
+  padding-left: 25px;
+  margin: 0.5em 0;
+}
+.message.ai li {
+  margin-bottom: 0.25em;
+}
+.message.ai code {
+  background-color: var(--input-bg); /* Use existing theme variable */
+  padding: 3px 6px;
+  border-radius: 6px;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.9em;
+}
+.message.ai pre {
+  background-color: var(--input-bg); /* Use existing theme variable */
+  padding: 12px;
+  border-radius: 8px;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  margin: 0.5em 0;
+}
+.message.ai pre code {
+  padding: 0;
+  background-color: transparent;
+  border-radius: 0;
+}
+.message.ai a {
+  color: var(--link-color);
+  text-decoration: underline;
+}
+.message.ai table {
+  width: auto;
+  max-width: 100%;
+  border-collapse: collapse;
+  margin: 1em 0;
+  display: block;
+  overflow-x: auto;
+}
+.message.ai th, .message.ai td {
+  border: 1px solid var(--border-color);
+  padding: 8px 12px;
+  text-align: left;
+}
+.message.ai th {
+  background-color: var(--input-bg); /* Use existing theme variable */
+  font-weight: bold;
+}
+.message.ai blockquote {
+  border-left: 4px solid var(--border-color);
+  padding-left: 1em;
+  margin-left: 0;
+  opacity: 0.8;
+}
+.message.ai hr {
+  border: none;
+  border-top: 1px solid var(--border-color);
+  margin: 1em 0;
+}
+
 
 /*
  * =========================================
@@ -183,6 +266,7 @@ body {
 .send-button:hover {
   background-color: var(--send-button-bg-hover);
 }
+
 
 /*
  * =========================================
@@ -260,23 +344,28 @@ body {
     background-color: rgba(255, 255, 255, 0.15);
 }
 
-
-.message-image {
-    max-width: 100%;
-    border-radius: 8px;
-    margin-bottom: 8px;
+/* ✨ --- Standardize Image Sizes --- ✨ */
+.message-image,
+.image-preview {
+    width: 220px;
+    height: 220px;
+    object-fit: cover; /* Prevents image distortion */
+    border-radius: 8px; /* Keep the corners rounded */
 }
 
 .image-preview-container {
     position: relative;
     display: inline-block;
     margin: 10px;
+    /* Adjusting size for consistency */
+    width: 220px;
+    height: 220px;
 }
 
 .image-preview {
-    max-width: 100px;
-    max-height: 100px;
-    border-radius: 8px;
+    /* Now inherits size from container */
+    width: 100%;
+    height: 100%;
     border: 1px solid #ccc;
 }
 
@@ -295,5 +384,5 @@ body {
     cursor: pointer;
     font-size: 16px;
     font-weight: bold;
+    color: #333; /* Make X visible */
 }
-
