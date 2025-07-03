@@ -8,6 +8,7 @@ import './App.css'
 type Message = {
     text: string;
     sender: "user" | "ai";
+    
 };
 
 // ✨ --- Theme Type --- ✨

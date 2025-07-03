@@ -7,7 +7,7 @@
 /* ☀️ Light Mode (Default) */
 :root {
   --body-bg-color: #f4f7f6;
-  --chat-container-bg: #ffffff;
+  --chat-container-bg: #f4f7f6;
   --chat-container-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   --header-bg: #4a90e2;
   --header-text: #ffffff;
@@ -27,7 +27,7 @@
 /* 🌒 Dark Mode */
 [data-theme='dark'] {
   --body-bg-color: #121212;
-  --chat-container-bg: #1e1e1e;
+  --chat-container-bg: #121212;
   --chat-container-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
   --header-bg: #1a1a1a;
   --header-text: #ffffff;
@@ -61,7 +61,7 @@
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   margin: 0;
-  background-color: var(--body-bg-color); /* Var */
+  background-color: var(--body-bg-color);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -96,7 +96,8 @@ body {
   text-align: center;
   font-weight: bold;
   font-size: 1.1rem; /* Slightly smaller for mobile */
-  border-bottom: 1px solid var(--border-color);
+  border-radius: 15px;
+  margin-top:15px;
 }
 
 .chat-area {
@@ -150,7 +151,7 @@ body {
 
 .input-form {
   display: flex;
-  border-top: 1px solid var(--border-color);
+  /* border-top: 1px solid var(--border-color); */
   padding: 10px;
   gap: 8px; /* Add gap for spacing */
 }
@@ -193,17 +194,16 @@ body {
 
 /* 📲 Tablets (portrait and landscape) */
 @media (min-width: 768px) {
-  #root {
-    padding: 2rem; /* Add back padding for larger screens */
-  }
+  /* #root {
+    padding: 2rem; 
+  } */
 
   .chat-container {
     width: 100%;
     max-width: 600px;
-    height: 90vh; /* Revert to 90vh */
-    max-height: 800px; /* Add a max-height */
-    border-radius: 12px; /* Add back border-radius */
-    box-shadow: var(--chat-container-shadow); /* Add back shadow */
+    height: 100vh; /* Revert to 90vh */
+    /* border-radius: 12px; */
+    /* box-shadow: var(--chat-container-shadow);  */
   }
 
   .chat-header {
@@ -239,7 +239,7 @@ body {
  */
 .theme-toggle-button {
   position: absolute;
-  top: 12px;
+  top: 25px;
   right: 16px;
   cursor: pointer;
   background: transparent;
