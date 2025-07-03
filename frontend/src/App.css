@@ -1,161 +1,261 @@
+/*
+ * =========================================
+ * 🎨 THEME VARIABLES
+ * =========================================
+ */
+
+/* ☀️ Light Mode (Default) */
+:root {
+  --body-bg-color: #f4f7f6;
+  --chat-container-bg: #ffffff;
+  --chat-container-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  --header-bg: #4a90e2;
+  --header-text: #ffffff;
+  --border-color: #ddd;
+  --user-message-bg: #4a90e2;
+  --user-message-text: #ffffff;
+  --ai-message-bg: #e9e9eb;
+  --ai-message-text: #333;
+  --loading-text: #888;
+  --input-bg: #f0f0f0;
+  --input-text: #333;
+  --send-button-bg: #4a90e2;
+  --send-button-bg-hover: #357abd;
+  --send-button-text: #ffffff;
+}
+
+/* 🌒 Dark Mode */
+[data-theme='dark'] {
+  --body-bg-color: #121212;
+  --chat-container-bg: #1e1e1e;
+  --chat-container-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  --header-bg: #1a1a1a;
+  --header-text: #ffffff;
+  --border-color: #444;
+  --user-message-bg: #3a7ac2;
+  --user-message-text: #ffffff;
+  --ai-message-bg: #3a3a3a;
+  --ai-message-text: #e0e0e0;
+  --loading-text: #aaa;
+  --input-bg: #2c2c2c;
+  --input-text: #e0e0e0;
+  --send-button-bg: #3a7ac2;
+  --send-button-bg-hover: #2a69b0;
+  --send-button-text: #ffffff;
+}
+
+/*
+ * =========================================
+ * GENERAL STYLES
+ * =========================================
+ */
+
 #root {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 2rem;
+  /* Padding is removed to allow chat container to be flush on mobile */
+  padding: 0;
   text-align: center;
 }
-/*
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
-}
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
-}
-
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
-} */
-
-/* General Styling */
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-    margin: 0;
-    background-color: #f4f7f6;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  margin: 0;
+  background-color: var(--body-bg-color); /* Var */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  transition: background-color 0.3s ease;
 }
 
-/* Chat Container */
+/*
+ * =========================================
+ * CHAT COMPONENTS
+ * =========================================
+ */
+
 .chat-container {
-    width: 100%;
-    max-width: 600px;
-    height: 90vh;
-    background-color: #ffffff;
-    border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
+  width: 100vw;
+  height: 100vh;
+  max-width: 100%; /* Default to full width for mobile-first */
+  max-height: 100%; /* Default to full height for mobile-first */
+  background-color: var(--chat-container-bg);
+  border-radius: 0; /* No radius on mobile */
+  box-shadow: none; /* No shadow on mobile */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
 }
 
-/* Chat Header */
 .chat-header {
-    background-color: #4a90e2;
-    color: white;
-    padding: 16px;
-    text-align: center;
-    font-weight: bold;
-    font-size: 1.2rem;
-    border-bottom: 1px solid #ddd;
+  background-color: var(--header-bg);
+  color: var(--header-text);
+  padding: 16px;
+  text-align: center;
+  font-weight: bold;
+  font-size: 1.1rem; /* Slightly smaller for mobile */
+  border-bottom: 1px solid var(--border-color);
 }
 
-/* Chat Area */
 .chat-area {
-    flex-grow: 1;
-    padding: 20px;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+  flex-grow: 1;
+  padding: 16px; /* Consistent padding */
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-/* Message Bubbles */
+/*
+ * =========================================
+ * MESSAGES & INDICATORS
+ * =========================================
+ */
+
 .message {
-    padding: 10px 15px;
-    border-radius: 18px;
-    max-width: 75%;
-    line-height: 1.5;
+  padding: 10px 15px;
+  border-radius: 18px;
+  max-width: 80%; /* Allow slightly wider messages on small screens */
+  line-height: 1.5;
+  font-size: 0.95rem; /* Slightly adjust font size */
 }
 
 .user {
-    background-color: #4a90e2;
-    color: white;
-    align-self: flex-end;
-    border-bottom-right-radius: 4px;
+  background-color: var(--user-message-bg);
+  color: var(--user-message-text);
+  align-self: flex-end;
+  border-bottom-right-radius: 4px;
 }
 
 .ai {
-    background-color: #e9e9eb;
-    color: #333;
-    align-self: flex-start;
-    border-bottom-left-radius: 4px;
+  background-color: var(--ai-message-bg);
+  color: var(--ai-message-text);
+  align-self: flex-start;
+  border-bottom-left-radius: 4px;
 }
 
-/* Loading Indicator */
 .loading {
-    align-self: flex-start;
-    color: #888;
-    font-style: italic;
+  align-self: flex-start;
+  color: var(--loading-text);
+  font-style: italic;
 }
 
+/*
+ * =========================================
+ * INPUT FORM
+ * =========================================
+ */
 
-/* Input Form */
 .input-form {
-    display: flex;
-    border-top: 1px solid #ddd;
-    padding: 10px;
+  display: flex;
+  border-top: 1px solid var(--border-color);
+  padding: 10px;
+  gap: 8px; /* Add gap for spacing */
 }
 
 .input-field {
-    flex-grow: 1;
-    border: none;
-    padding: 12px;
-    font-size: 1rem;
-    border-radius: 20px;
-    background-color: #f0f0f0;
-    outline: none;
-
-    color:#333;
+  flex-grow: 1;
+  border: none;
+  padding: 12px;
+  font-size: 1rem;
+  border-radius: 20px;
+  background-color: var(--input-bg);
+  color: var(--input-text);
+  outline: none;
 }
 
 .send-button {
-    background-color: #4a90e2;
-    color: white;
-    border: none;
-    padding: 0 20px;
-    border-radius: 20px;
-    margin-left: 10px;
-    cursor: pointer;
-    font-size: 1rem;
-    transition: background-color 0.2s;
+  background-color: var(--send-button-bg);
+  color: var(--send-button-text);
+  border: none;
+  padding: 0 20px;
+  border-radius: 20px;
+  /* margin-left is removed in favor of gap */
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.2s;
+  flex-shrink: 0; /* Prevent button from shrinking */
 }
 
 .send-button:hover {
-    background-color: #357abd;
+  background-color: var(--send-button-bg-hover);
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-    .chat-container {
-        height: 100vh;
-        width: 100vw;
-        border-radius: 0;
-    }
+/*
+ * =========================================
+ * ✨ RESPONSIVE DESIGN
+ * =========================================
+ */
+
+/* 📱 Small mobile phones will use the mobile-first styles above */
+
+/* 📲 Tablets (portrait and landscape) */
+@media (min-width: 768px) {
+  #root {
+    padding: 2rem; /* Add back padding for larger screens */
+  }
+
+  .chat-container {
+    width: 100%;
+    max-width: 600px;
+    height: 90vh; /* Revert to 90vh */
+    max-height: 800px; /* Add a max-height */
+    border-radius: 12px; /* Add back border-radius */
+    box-shadow: var(--chat-container-shadow); /* Add back shadow */
+  }
+
+  .chat-header {
+    font-size: 1.2rem; /* Restore font size */
+  }
+
+  .message {
+    max-width: 75%; /* Restore message width */
+    font-size: 1rem; /* Restore font size */
+  }
+}
+
+/* 💻 Laptops and Desktops */
+@media (min-width: 1024px) {
+  .chat-container {
+    max-width: 700px; /* Slightly wider for more space */
+  }
+}
+
+/* 🖥️ Large Screens */
+@media (min-width: 1440px) {
+  .chat-container {
+    max-width: 800px; /* Even wider for large monitors */
+    min-width:750px;
+  }
+}
+
+
+/*
+ * =========================================
+ * THEME TOGGLE BUTTON
+ * =========================================
+ */
+.theme-toggle-button {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  cursor: pointer;
+  background: transparent;
+  color: var(--header-text);
+  border: none;
+  padding: 8px;
+  border-radius: 50%;
+  font-size: 1.2rem;
+  line-height: 1;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.theme-toggle-button:hover {
+    background-color: rgba(255, 255, 255, 0.15);
 }

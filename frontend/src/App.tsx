@@ -10,6 +10,9 @@ type Message = {
     sender: "user" | "ai";
 };
 
+// ✨ --- Theme Type --- ✨
+type Theme = 'light' | 'dark';
+
 function App() {
     const [messages, setMessages] = useState<Message[]>([
         { text: "Hello! How can I help you today?", sender: "ai" }
@@ -20,6 +23,20 @@ function App() {
     const ws = useRef<WebSocket | null>(null);
 
     const sessionId = useRef<string>(crypto.randomUUID());
+    const [theme, setTheme] = useState<Theme>(() => {
+        const savedTheme = localStorage.getItem('theme') as Theme | null;
+        if (savedTheme) {
+            return savedTheme;
+        }
+        // Set theme based on user's system preference
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    });
+
+    useEffect(() => {
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('theme', theme);
+    }, [theme]);
+
 
     // Auto-scroll to the bottom of the chat
     useEffect(() => {
@@ -112,9 +129,17 @@ function App() {
         };
     };
 
+    // ✨ --- Function to toggle theme --- ✨
+    const toggleTheme = () => {
+        setTheme(prevTheme => (prevTheme === 'light' ? 'dark' : 'light'));
+    };
+
     return (
         <>
             <div className="chat-container">
+                <button onClick={toggleTheme} className="theme-toggle-button">
+                    {theme === 'light' ? '🌙' : '☀️'}
+                </button>
                 <div className="chat-header">AI Chatbot Assistant</div>
                 <div className="chat-area" ref={chatAreaRef}>
                     {messages.map((msg, index) => (
