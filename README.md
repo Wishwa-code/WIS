@@ -47,10 +47,12 @@ cd WIS
 ```bash
 # Navigate to the backend directory
 cd backend
-
+```
+```bash
 # Install dependencies
 pnpm install
-
+```
+```bash
 # Create a .env file
 touch .env
 ```
@@ -63,6 +65,10 @@ GEMINI_API_KEY="YOUR_GEMINI_API_KEY_HERE"
 OPENAI_API_KEY="YOUR_OPENAI_API_KEY_HERE"
 ```
 
+```bash
+# Run the server
+pnpm run dev
+```
 ### 3. Running the Application
 
 You'll need two terminal windows open simultaneously.
