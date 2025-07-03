@@ -38,11 +38,15 @@ Follow these steps to run the project locally.
 ### 1. Clone the Repository
 
 ```bash
-git clone [https://github.com/Wishwa-code/WIS.git](https://github.com/Wishwa-code/WIS.git)
+git clone https://github.com/Wishwa-code/WIS.git
 cd WIS
 ```
 
-### 2. Backend Setup
+You'll need two terminal windows open simultaneously.
+
+-   **Terminal 1: Start the Backend Server**
+
+### 2. Backend 
 
 ```bash
 # Navigate to the backend directory
@@ -69,25 +73,18 @@ OPENAI_API_KEY="YOUR_OPENAI_API_KEY_HERE"
 # Run the server
 pnpm run dev
 ```
-### 3. Running the Application
-
-You'll need two terminal windows open simultaneously.
-
--   **Terminal 1: Start the Backend Server**
-
-```bash
-# In the /backend directory
-pnpm install
-```
-
-```bash
-# In the /backend directory
-pnpm run dev
-```
 
 The server will start on `http://localhost:5000`.
 
--   **Terminal 2: Start the Frontend**
+
+-   **Terminal 2: Start the Frontend Server**
+
+### 3. Frontend
+
+```bash
+# Navigate to the backend directory
+cd frontend
+```
 
 ```bash
 # In the /backend directory
@@ -98,6 +95,10 @@ pnpm install
 # In the /backend directory
 pnpm run dev
 ```
+
+Alt + click on displayed link  to open the chatbot on localhost. Make sure API key setup is correctly created in  .env file in backend directory `WIS/backend/.env`. 
+
+
 
 
 # API Documentation
