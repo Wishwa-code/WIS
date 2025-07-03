@@ -31,15 +31,15 @@
   --header-bg: #1a1a1a;
   --header-text: #ffffff;
   --border-color: #444;
-  --user-message-bg: #3a7ac2;
+  --user-message-bg: #1a1a1a;
   --user-message-text: #ffffff;
   --ai-message-bg: #3a3a3a;
   --ai-message-text: #e0e0e0;
   --loading-text: #aaa;
   --input-bg: #2c2c2c;
   --input-text: #e0e0e0;
-  --send-button-bg: #3a7ac2;
-  --send-button-bg-hover: #2a69b0;
+  --send-button-bg: #1a1a1a;
+  --send-button-bg-hover: #1a1a1a;
   --send-button-text: #ffffff;
   --link-color: #90caf9;
 }
@@ -128,6 +128,7 @@ body {
 .user {
   background-color: var(--user-message-bg);
   color: var(--user-message-text);
+  align-items: end;
   align-self: flex-end;
   border-bottom-right-radius: 4px;
   display: flex;
@@ -248,6 +249,7 @@ body {
   background-color: var(--input-bg);
   color: var(--input-text);
   outline: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 4px 6px rgba(0, 0, 0, 0.12);
 }
 
 .attach-button {
@@ -355,8 +357,9 @@ body {
 .image-preview {
     width: 220px;
     height: 220px;
-    object-fit: cover; /* Prevents image distortion */
-    border-radius: 8px; /* Keep the corners rounded */
+    object-fit: contain;
+    background-color: var(--input-bg);
+    margin-top: 5px;
 }
 
 .image-preview-container {
@@ -370,6 +373,7 @@ body {
 .image-preview {
     width: 100%;
     height: 100%;
+    object-fit: contain;
     border: 1px solid #ccc;
 }
 
@@ -378,10 +382,10 @@ body {
     top: -10px;
     right: -10px;
     background: #fff;
+    color:#FF0033;
     border: 1px solid #ccc;
     border-radius: 50%;
-    width: 24px;
-    height: 24px;
+    width: 15px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -389,4 +393,6 @@ body {
     font-size: 16px;
     font-weight: bold;
     color: #333; 
+    font-family:serif;
+    font-size: 16px;
 }

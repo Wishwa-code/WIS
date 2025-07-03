@@ -1,0 +1,198 @@
+# AI Chatbot Assistant
+
+A simple, full-stack web application featuring an AI-powered chatbot built with React, Node.js, and the Google Gemini API and openAI API.
+
+## 🚀 Demo
+
+[Link to demo video on Google Drive]
+
+## ✨ Features
+
+-   **Interactive Chat UI**: Clean, responsive, and modern chat interface.
+-   **Real-time Responses**: Get instant answers from the powerful Gemini AI.
+-   **Simple & Lightweight**: Built with React (via CDN) and vanilla CSS for fast performance.
+
+## 🛠️ Tech Stack
+
+-   **Frontend**: React, Vanilla CSS
+-   **Backend**: Node.js, Express, WebSockets
+-   **AI**: Google Gemini API, OpenAI API
+
+## 📋 Setup and Installation
+
+Follow these steps to run the project locally.
+
+### Prerequisites
+
+-   Node.js (v14 or later)
+-   npm
+-   A Google Gemini API Key
+
+### 1. Clone the Repository
+
+```bash
+git clone [https://github.com/Wishwa-code/WIS.git](https://github.com/Wishwa-code/WIS.git)
+cd WIS
+```
+
+### 2. Backend Setup
+
+```bash
+# Navigate to the backend directory
+cd backend
+
+# Install dependencies
+pnpm install
+
+# Create a .env file
+touch .env
+```
+
+Now, open the `.env` file and add your Google Gemini API key:
+
+```env
+# Get your API key from Google AI Studio: [https://ai.google.dev/](https://ai.google.dev/)
+GEMINI_API_KEY="YOUR_GEMINI_API_KEY_HERE"
+OPENAI_API_KEY="YOUR_OPENAI_API_KEY_HERE"
+```
+
+### 3. Running the Application
+
+You'll need two terminal windows open simultaneously.
+
+-   **Terminal 1: Start the Backend Server**
+
+```bash
+# In the /backend directory
+pnpm install
+```
+
+```bash
+# In the /backend directory
+pnpm run dev
+```
+
+The server will start on `http://localhost:5000`.
+
+-   **Terminal 2: Start the Frontend**
+
+```bash
+# In the /backend directory
+pnpm install
+```
+
+```bash
+# In the /backend directory
+pnpm run dev
+```
+
+# API Documentation
+
+This document provides details on the available API endpoints for this chat server. The server uses a combination of a REST API for file uploads and a WebSocket for real-time chat communication.
+
+---
+
+## REST API Endpoints
+
+### `POST /upload`
+
+Uploads an image file to the server. The server temporarily stores the file and returns its path. This path should then be used in the WebSocket message to send the image to the AI.
+
+* **Method**: `POST`
+* **Access**: Public
+* **Content-Type**: `multipart/form-data`
+
+#### Request
+
+The request must contain a single file attached to the `image` field.
+
+**Example cURL Request:**
+
+```bash
+curl -X POST http://localhost:5000/upload \
+  -F "image=@/path/to/your/image.jpg"
+```
+
+#### Response
+On Success (Status 200): Returns a JSON object containing the server path of the uploaded file.
+```
+{
+  "filePath": "uploads/1720000000000.jpg"
+}
+```
+
+On Failure (Status 400): Returns an error message if no file is uploaded.
+
+```
+No file uploaded.
+```
+
+### WebSocket API
+The core chat functionality is handled over a WebSocket connection. It supports text messages, image-based queries, and maintains a chat history for each session.
+
+#### Connection
+To establish a connection, connect to the WebSocket server and provide a unique sessionId as a query parameter. This ID is used to maintain the context of a conversation.
+
+```
+URL: ws://localhost:5000/?sessionId=<YOUR_UNIQUE_SESSION_ID>
+```
+
+#### Example JavaScript Client Connection:
+
+```
+const sessionId = 'session-' + Date.now(); // Generate a unique session ID
+const ws = new WebSocket(`ws://localhost:5000/?sessionId=${sessionId}`);
+```
+
+### 💬 Client-to-Server Messages
+Messages sent from the client to the server must be a stringified JSON object. The object should contain either a message (text), an imagePath, or both.
+
+* `message` (string, optional): The user's text message.
+
+* `imagePath` (string, optional): The file path returned from a successful call to the `POST /upload` endpoint.
+
+#### Example Messages:
+
+```
+// Text-only message
+const textMessage = {
+  message: "Hello, what can you do?"
+};
+ws.send(JSON.stringify(textMessage));
+
+// Image-only message (after uploading an image)
+const imageMessage = {
+  imagePath: "uploads/1720000000000.jpg"
+};
+ws.send(JSON.stringify(imageMessage));
+
+// Text and image message
+const multiModalMessage = {
+  message: "What do you see in this image?",
+  imagePath: "uploads/1720000000000.jpg"
+};
+ws.send(JSON.stringify(multiModalMessage));
+```
+
+#### Server-to-Client Messages
+The server sends back stringified JSON objects to the client. The AI's response is streamed in chunks.
+
+**AI Response Chunk:** A part of the AI's full response.
+```
+{ "reply": "This is a part of the AI's response." }
+```
+
+**End of Stream Notification:** Sent after all reply chunks for a given prompt have been delivered.
+
+{ "endOfStream": true }
+
+**Fallback Status:** Informs the client if the primary AI model (Gemini) fails and the system is switching to the fallback model (OpenAI).
+
+```
+{ "status": "Gemini failed. Falling back to OpenAI..." }
+```
+**Error Message:** Sent if an error occurs on the server.
+
+```
+{ "error": "Failed to process your request due to an internal error." }
+```

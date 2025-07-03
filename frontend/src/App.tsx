@@ -228,8 +228,8 @@ function App() {
                 <div className="chat-header">AI Chatbot Assistant</div>
                 <div className="chat-area" ref={chatAreaRef}>
                     {messages.map((msg, index) => (
-                        // Render the message bubble even if it's an empty AI message
-                        // The loading indicator will show alongside it.
+                        // Rendering the message bubble even if it's an empty AI message
+                        // The loading indicator is displayed alongside it.
                         <div key={index} className={`message ${msg.sender}`}>
                             {msg.image && <img src={msg.image} alt="User upload" className="message-image" />}
                             {msg.sender === 'ai' ? (
