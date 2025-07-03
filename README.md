@@ -31,9 +31,9 @@ Follow these steps to run the project locally.
 
 ### Prerequisites
 
--   Node.js (v14 or later)
--   npm
--   A Google Gemini API Key
+-   Node.js 
+-   pnpm
+-   A Google Gemini API Key or OpenAI API Key
 
 ### 1. Clone the Repository
 
