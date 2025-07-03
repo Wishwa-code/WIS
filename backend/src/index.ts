@@ -2,12 +2,12 @@ import express, { Express, Request, Response, RequestHandler } from 'express';
 import { WebSocketServer, WebSocket } from 'ws';
 import * as http from 'http';
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+import OpenAI from 'openai';
 const dotenv = require('dotenv');
 const cors = require('cors');
 import multer from 'multer';
 import fs from 'fs';
 import path from 'path';
-// const http = require('http');
 
 // Load environment variables from .env file
 dotenv.config();
@@ -26,25 +26,51 @@ if (!fs.existsSync(uploadsDir)) {
 }
 
 if (!process.env.GEMINI_API_KEY) {
-  throw new Error('GEMINI_API_KEY is not set in the environment variables.');
+    throw new Error('GEMINI_API_KEY is not set in the environment variables.');
 }
+
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+const geminiModel = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+
+if (!process.env.OPENAI_API_KEY) {
+    throw new Error('OPENAI_API_KEY is not set in the environment variables.');
+}
+
+const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+});
+
+const openAIModelName = 'gpt-4o';
 
 const chatHistories = new Map<string, any[]>();
 
 const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
+	destination: function (req, file, cb) {
         // Use the consistent 'uploadsDir' path here
-        cb(null, uploadsDir);
-    },
-    filename: function (req, file, cb) {
-        cb(null, Date.now() + path.extname(file.originalname));
-    }
+		cb(null, uploadsDir);
+	},
+	filename: function (req, file, cb) {
+        cb(null, Date.now() + path.extname(file.originalname));
+    }
 });
 
-
 const upload = multer({ storage: storage });
+
+/**
+ * @route   GET /
+ * @desc    Handle chat messages and return AI response
+ * @access  Public
+ */
+
+app.get('/', (req: Request, res: Response) => {
+    res.send('Hello from Express + TypeScript Server');
+});
+
+/**
+ * @route   POST /upload
+ * @desc    Handle chat messages and return AI response
+ * @access  Public
+ */
 
 app.post('/upload', upload.single('image'), (req: Request, res: Response): void => {
     if (!req.file) {
@@ -54,124 +80,160 @@ app.post('/upload', upload.single('image'), (req: Request, res: Response): void 
     res.json({ filePath: req.file.path });
 });
 
-/**
- * @route   POST /api/chat
- * @desc    Handle chat messages and return AI response
- * @access  Public
- */
-
-
-
-app.get('/', (req: Request, res: Response) => {
-  res.send('Hello from Express + TypeScript Server');
-});
 
 const server = http.createServer(app);
-
 const wss = new WebSocketServer({ server });
 
 wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
-  console.log('Client connected');
+    console.log('Client connected');
 
-  const url = new URL(req.url!, `http://${req.headers.host}`);
-  const sessionId = url.searchParams.get('sessionId');
+    const url = new URL(req.url!, `http://${req.headers.host}`);
+    const sessionId = url.searchParams.get('sessionId');
 
-  // If no sessionId is provided, close the connection.
-  if (!sessionId) {
-    console.log('Connection rejected: No sessionId provided.');
-    ws.close(1008, 'Session ID is required');
-    return;
-  }
-
-  console.log(`Client connected with sessionId: ${sessionId}`);
-
-  // Retrieve existing history or notify that it's a new chat.
-  if (chatHistories.has(sessionId)) {
-      console.log(`Resuming chat for session: ${sessionId}`);
-  } else {
-      console.log(`Starting new chat for session: ${sessionId}`);
-  }
-
-  ws.on('message', async (message: string) => {
-    try {
-      const { message: userMessage, imagePath  } = JSON.parse(message);
-
-      if (!userMessage) {
-        ws.send(JSON.stringify({ error: 'Message is required.' }));
+    // Session id is necessary at the moment to start a chat
+    if (!sessionId) {
+        console.log('Connection rejected: No sessionId provided.');
+        ws.close(1008, 'Session ID is required');
         return;
-      }
+    }
 
-      // 1. Get or initialize the chat history for this session.
-      const history = chatHistories.get(sessionId) || [];
+    console.log(`Client connected with sessionId: ${sessionId}`);
 
-      // 2. Start a chat session with the existing history.
-      const chat = model.startChat({ history });
+    // Retrieve existing history or notify that it's a new chat.
+    if (chatHistories.has(sessionId)) {
+        console.log(`Resuming chat for session: ${sessionId}`);
+    } else {
+        console.log(`Starting new chat for session: ${sessionId}`);
+    }
 
-      const promptParts = [];
-        if (userMessage) {
-            promptParts.push({ text: userMessage });
-        }
-      let imageParts: any[] = [];
+    ws.on('message', async (message: string) => {
+        try {
+            const { message: userMessage, imagePath } = JSON.parse(message);
 
-      if (imagePath) {
+            if (!userMessage && !imagePath) {
+                ws.send(JSON.stringify({ error: 'A message or an image is required.' }));
+                return;
+            }
+
+            const history = chatHistories.get(sessionId) || [];
+            let fullResponse = '';
+
+            // --- Prepare content parts (unified for both models) ---
+            const userHistoryParts: any[] = [];
+            let imageBase64 = '';
+            let mimeType = '';
+
+            if (userMessage) {
+                userHistoryParts.push({ text: userMessage });
+            }
+
+            if (imagePath) {
                 try {
-                    const imageBase64 = fs.readFileSync(imagePath, { encoding: 'base64' });
-                    const mimeType = path.extname(imagePath) === '.png' ? 'image/png' : 'image/jpeg';
-                    imageParts.push({
-                        inlineData: {
-                            data: imageBase64,
-                            mimeType
-                        }
-                    });
-                    // Clean up the uploaded file after reading it
-                    fs.unlinkSync(imagePath);
+                    imageBase64 = fs.readFileSync(imagePath, { encoding: 'base64' });
+                    mimeType = path.extname(imagePath) === '.png' ? 'image/png' : 'image/jpeg';
+                    userHistoryParts.push({
+                    inlineData: { data: imageBase64, mimeType }
+                });
                 } catch (error) {
                     console.error('Error processing image:', error);
                     ws.send(JSON.stringify({ error: 'Failed to process the uploaded image.' }));
+                    if (fs.existsSync(imagePath)) fs.unlinkSync(imagePath); // Clean up on error
                     return;
                 }
             }
 
-      // 3. Send the new message and get a streaming response.
-      // const result = await chat.sendMessageStream(userMessage);
-      const result = await chat.sendMessageStream([...promptParts, ...imageParts]);
+            try {
+                // 🚀 ATTEMPT 1: GOOGLE GEMINI
+                console.log(`Attempting to generate response with Gemini for session: ${sessionId}`);
+                const chat = geminiModel.startChat({ history });
+                const result = await chat.sendMessageStream(userHistoryParts);
 
-      // ✨ START: CODE TO BE CHANGED ✨
-      // const result = await model.generateContentStream(userMessage);
-      let fullResponse = '';
-      for await (const chunk of result.stream) {
-        const chunkText = chunk.text();
-        fullResponse += chunkText;
-        ws.send(JSON.stringify({ reply: chunkText }));
-      }
-      // ✨ END: CODE TO BE CHANGED ✨
+                for await (const chunk of result.stream) {
+                    const chunkText = chunk.text();
+                    fullResponse += chunkText;
+                    ws.send(JSON.stringify({ reply: chunkText }));
+                }
 
-      const userHistoryParts = [...promptParts, ...imageParts];
-      history.push({ role: 'user', parts: userHistoryParts });
-      history.push({ role: 'model', parts: [{ text: fullResponse }] });
+            } catch (geminiError) {
+                // 🔄 FALLBACK: OPENAI
+                console.error('Gemini API failed. Falling back to OpenAI.', geminiModel.message);
+                ws.send(JSON.stringify({ status: 'Gemini failed. Falling back to OpenAI...' }));
 
-      // history.push({ role: 'user', parts: [{ text: userMessage }] });
-      // history.push({ role: 'model', parts: [{ text: fullResponse }] });
+                 // 1. Convert Gemini history to OpenAI format
+                const openAIHistory = history.map((item: any) => ({
+                    role: item.role === 'model' ? 'assistant' : 'user',
+                    content: item.parts.map((part: any) => {
+                        if (part.text) {
+                            return { type: 'text', text: part.text };
+                        }
+                        if (part.inlineData) {
+                            return {
+                                type: 'image_url',
+                                image_url: { url: `data:${part.inlineData.mimeType};base64,${part.inlineData.data}` }
+                            };
+                        }
+                        return null;
+                    }).filter(Boolean)
+                }));
 
-      // 5. Save the updated history back to our store.
-      chatHistories.set(sessionId, history);
-      
-      // Notify the client that the stream has ended
-      ws.send(JSON.stringify({ endOfStream: true }));
+                 // 2. Construct the current user message for OpenAI
+                const currentUserContent: any[] = [];
 
-    } catch (error) {
-      console.error('Error processing message:', error);
-      ws.send(JSON.stringify({ error: 'Failed to process message.' }));
-    }
-  });
+                if (userMessage) {
+                    currentUserContent.push({ type: 'text', text: userMessage });
+                }
 
-  ws.on('close', () => {
-    console.log('Client disconnected');
-  });
+                if (imagePath && imageBase64) {
+                    currentUserContent.push({
+                        type: 'image_url',
+                        image_url: { url: `data:${mimeType};base64,${imageBase64}` }
+                    });
+                }
+                const messages: any[] = [
+                    ...openAIHistory,
+                    { role: 'user', content: currentUserContent }
+                ];
+
+                // 3. Call OpenAI API and stream the response
+                const stream = await openai.chat.completions.create({
+                    model: openAIModelName,
+                    messages: messages,
+                    stream: true,
+                });
+
+                for await (const chunk of stream) {
+                    const chunkText = chunk.choices[0]?.delta?.content || '';
+                    if (chunkText) {
+                        fullResponse += chunkText;
+                        ws.send(JSON.stringify({ reply: chunkText }));
+                    }
+                }
+            }
+
+            // --- UNIFIED HISTORY AND CLEANUP ---
+            // 1. Update history in the unified (Gemini) format
+            history.push({ role: 'user', parts: userHistoryParts });
+            history.push({ role: 'model', parts: [{ text: fullResponse }] });
+            chatHistories.set(sessionId, history);
+
+            // 2. Clean up the uploaded file now that we are done with it
+            if (imagePath && fs.existsSync(imagePath)) {
+                fs.unlinkSync(imagePath);
+            }
+            // 3. Notify the client that the stream has ended
+            ws.send(JSON.stringify({ endOfStream: true }));
+
+            } catch (error) {
+                console.error('An unexpected error occurred:', error);
+                ws.send(JSON.stringify({ error: 'Failed to process your request due to an internal error.' }));
+            }
+        });
+
+        ws.on('close', () => {
+        console.log('Client disconnected');
+    });
 });
 
-
-
 server.listen(port, () => {
-  console.log(`⚡️[server]: Server is running at http://localhost:${port}`);
+    console.log(`⚡️[server]: Server is running at http://localhost:${port}`);
 });
