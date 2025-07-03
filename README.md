@@ -198,7 +198,10 @@ The server sends back stringified JSON objects to the client. The AI's response 
 
 **End of Stream Notification:** Sent after all reply chunks for a given prompt have been delivered.
 
+
+```
 { "endOfStream": true }
+```
 
 **Fallback Status:** Informs the client if the primary AI model (Gemini) fails and the system is switching to the fallback model (OpenAI).
 
