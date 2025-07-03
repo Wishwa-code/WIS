@@ -4,7 +4,7 @@ A simple, full-stack web application featuring an AI-powered chatbot built with 
 
 ## 🚀 Demo
 
-[Link to demo video on Google Drive]
+[Link to demo video on Google Drive](https://drive.google.com/file/d/1VgS7LkFtXhwGpzhYoL25O9sSF4GDdjfT/view?usp=sharing)
 
 ## ✨ Features
 
